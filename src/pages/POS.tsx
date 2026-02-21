@@ -4,48 +4,53 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Trash2, PauseCircle, Printer, X } from "lucide-react";
-
-interface CartItem {
-  id: string;
-  name: string;
-  code: string;
-  price: number;
-  qty: number;
-  discount: number;
-  gstRate: number;
-}
-
-const mockProducts = [
-  { id: "1", name: "Tata Salt 1kg", code: "TS001", price: 20, gstRate: 5 },
-  { id: "2", name: "Amul Butter 500g", code: "AB002", price: 50, gstRate: 12 },
-  { id: "3", name: "Maggi Noodles Pack", code: "MN003", price: 12, gstRate: 18 },
-  { id: "4", name: "Surf Excel 1kg", code: "SE004", price: 70, gstRate: 28 },
-  { id: "5", name: "Red Label Tea 500g", code: "RL005", price: 150, gstRate: 5 },
-  { id: "6", name: "Notebook 200pg", code: "NB006", price: 40, gstRate: 12 },
-  { id: "7", name: "LED Bulb 12W", code: "LB007", price: 120, gstRate: 18 },
-  { id: "8", name: "USB Cable 1m", code: "UC008", price: 80, gstRate: 18 },
-];
+import { Search, Trash2, PauseCircle, Printer, X, Download } from "lucide-react";
+import { useProducts } from "@/hooks/useProducts";
+import { useCompleteSale } from "@/hooks/useSales";
+import { AdHocItemDialog } from "@/components/pos/AdHocItemDialog";
+import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { CartItem } from "@/types/database";
 
 export default function POS() {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [amountPaid, setAmountPaid] = useState("");
+  const [customerName, setCustomerName] = useState("Walk-in");
 
-  const filtered = mockProducts.filter(
+  const { data: products = [], isLoading } = useProducts();
+  const completeSale = useCompleteSale();
+
+  const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.code.toLowerCase().includes(search.toLowerCase())
   );
 
-  const addToCart = (product: (typeof mockProducts)[0]) => {
-    const existing = cart.find((c) => c.id === product.id);
+  const addToCart = (product: typeof products[0]) => {
+    const existing = cart.find((c) => c.productId === product.id);
     if (existing) {
-      setCart(cart.map((c) => (c.id === product.id ? { ...c, qty: c.qty + 1 } : c)));
+      setCart(cart.map((c) => (c.productId === product.id ? { ...c, qty: c.qty + 1 } : c)));
     } else {
-      setCart([...cart, { ...product, qty: 1, discount: 0 }]);
+      setCart([
+        ...cart,
+        {
+          id: product.id,
+          name: product.name,
+          code: product.code,
+          price: product.sell_price,
+          qty: 1,
+          discount: 0,
+          gstRate: product.gst_rate,
+          productId: product.id,
+        },
+      ]);
     }
+  };
+
+  const addAdHocItem = (item: CartItem) => {
+    setCart([...cart, item]);
   };
 
   const updateQty = (id: string, qty: number) => {
@@ -71,6 +76,43 @@ export default function POS() {
   const grandTotal = subtotal + totalGST;
   const balance = Number(amountPaid) - grandTotal;
 
+  const handleCompleteSale = async () => {
+    const paid = Number(amountPaid) || grandTotal;
+
+    const result = await completeSale.mutateAsync({
+      cart,
+      subtotal,
+      totalGST,
+      cgst,
+      sgst,
+      grandTotal,
+      paymentMethod,
+      amountPaid: paid,
+      balance: paid - grandTotal,
+      customerName,
+    });
+
+    // Generate PDF
+    generateInvoicePdf({
+      invoiceNumber: result.sale.invoice_number,
+      date: new Date().toLocaleDateString("en-IN"),
+      customerName,
+      cart,
+      subtotal,
+      cgst,
+      sgst,
+      grandTotal,
+      paymentMethod,
+      amountPaid: paid,
+      balance: paid - grandTotal,
+    });
+
+    // Reset
+    setCart([]);
+    setAmountPaid("");
+    setCustomerName("Walk-in");
+  };
+
   return (
     <div className="p-6 h-[calc(100vh)] flex gap-4">
       {/* Left: Product search */}
@@ -85,29 +127,38 @@ export default function POS() {
               className="pl-9"
             />
           </div>
-          <Button variant="outline" size="sm">
-            <Plus className="mr-1 h-4 w-4" /> Ad-hoc Item
-          </Button>
+          <AdHocItemDialog onAdd={addAdHocItem} />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-auto flex-1">
-          {filtered.map((p) => (
-            <Card
-              key={p.id}
-              className="cursor-pointer hover:border-primary transition-colors"
-              onClick={() => addToCart(p)}
-            >
-              <CardContent className="p-3">
-                <p className="font-medium text-sm truncate">{p.name}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs text-muted-foreground">{p.code}</span>
-                  <Badge variant="secondary" className="text-xs">GST {p.gstRate}%</Badge>
-                </div>
-                <p className="text-lg font-bold mt-1">₹{p.price}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-auto flex-1">
+            {filtered.map((p) => (
+              <Card
+                key={p.id}
+                className="cursor-pointer hover:border-primary transition-colors"
+                onClick={() => addToCart(p)}
+              >
+                <CardContent className="p-3">
+                  <p className="font-medium text-sm truncate">{p.name}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-xs text-muted-foreground">{p.code}</span>
+                    <Badge variant="secondary" className="text-xs">GST {p.gst_rate}%</Badge>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-lg font-bold">₹{p.sell_price}</p>
+                    <span className={`text-xs ${p.stock <= 15 ? "text-destructive" : "text-muted-foreground"}`}>
+                      Stock: {p.stock}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Right: Cart & Billing */}
@@ -119,6 +170,12 @@ export default function POS() {
               <PauseCircle className="mr-1 h-4 w-4" /> Suspend
             </Button>
           </div>
+          <Input
+            placeholder="Customer Name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            className="h-8 text-xs mt-2"
+          />
         </CardHeader>
         <CardContent className="flex-1 overflow-auto p-3 space-y-2">
           {cart.length === 0 ? (
@@ -131,7 +188,10 @@ export default function POS() {
               <div key={item.id} className="flex items-start gap-2 p-2 rounded-md bg-muted/50">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">₹{item.price} × {item.qty}</p>
+                  <p className="text-xs text-muted-foreground">
+                    ₹{item.price} × {item.qty}
+                    {item.productId === null && <Badge variant="outline" className="ml-1 text-[10px] py-0">Ad-hoc</Badge>}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1">
                   <Input
@@ -206,8 +266,13 @@ export default function POS() {
           )}
 
           <div className="flex gap-2 pt-1">
-            <Button className="flex-1" disabled={cart.length === 0}>
-              <Printer className="mr-1 h-4 w-4" /> Complete Sale
+            <Button
+              className="flex-1"
+              disabled={cart.length === 0 || completeSale.isPending}
+              onClick={handleCompleteSale}
+            >
+              <Download className="mr-1 h-4 w-4" />
+              {completeSale.isPending ? "Processing..." : "Complete & Download Invoice"}
             </Button>
             <Button variant="destructive" size="icon" onClick={() => setCart([])}>
               <Trash2 className="h-4 w-4" />
