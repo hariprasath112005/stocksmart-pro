@@ -6,42 +6,37 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-
-const monthlySales = [
-  { month: "Sep", amount: 320000 },
-  { month: "Oct", amount: 410000 },
-  { month: "Nov", amount: 385000 },
-  { month: "Dec", amount: 520000 },
-  { month: "Jan", amount: 445000 },
-  { month: "Feb", amount: 485200 },
-];
-
-const taxBreakdown = [
-  { category: "5% GST Items", taxable: 120000, cgst: 3000, sgst: 3000, igst: 0, total: 6000 },
-  { category: "12% GST Items", taxable: 85000, cgst: 5100, sgst: 5100, igst: 0, total: 10200 },
-  { category: "18% GST Items", taxable: 210000, cgst: 18900, sgst: 18900, igst: 0, total: 37800 },
-  { category: "28% GST Items", taxable: 45000, cgst: 6300, sgst: 6300, igst: 0, total: 12600 },
-];
-
-const itemWise = [
-  { name: "Tata Salt 1kg", sold: 142, revenue: 2840, profit: 710 },
-  { name: "Amul Butter 500g", sold: 98, revenue: 4900, profit: 1176 },
-  { name: "Maggi Noodles Pack", sold: 85, revenue: 1020, profit: 340 },
-  { name: "Surf Excel 1kg", sold: 72, revenue: 5040, profit: 1440 },
-  { name: "Red Label Tea 500g", sold: 65, revenue: 9750, profit: 2600 },
-];
+import { useReports } from "@/hooks/useSales";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Reports() {
+  const { data, isLoading } = useReports();
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="grid grid-cols-1 gap-6">
+          <Skeleton className="h-72 w-full" />
+          <Skeleton className="h-72 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  const { monthlySales, taxBreakdown, itemWise } = data || { monthlySales: [], taxBreakdown: [], itemWise: [] };
+
+  const totalRevenue = itemWise.reduce((sum: number, item: any) => sum + Number(item.revenue), 0);
+  const totalQtySold = itemWise.reduce((sum: number, item: any) => sum + Number(item.sold), 0);
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
 
       <Tabs defaultValue="sales">
         <TabsList>
-          <TabsTrigger value="sales">Sales</TabsTrigger>
+          <TabsTrigger value="sales">Sales Overview</TabsTrigger>
           <TabsTrigger value="tax">Tax (GST)</TabsTrigger>
-          <TabsTrigger value="items">Item-wise</TabsTrigger>
-          <TabsTrigger value="pnl">P&L</TabsTrigger>
+          <TabsTrigger value="items">Item-wise Sales</TabsTrigger>
         </TabsList>
 
         <TabsContent value="sales">
@@ -55,11 +50,15 @@ export default function Reports() {
                   <BarChart data={monthlySales}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                     <XAxis dataKey="month" />
-                    <YAxis tickFormatter={(v) => `₹${(v / 100000).toFixed(1)}L`} />
-                    <Tooltip formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`} />
+                    <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: number) => `₹${Number(v).toLocaleString("en-IN")}`} />
                     <Bar dataKey="amount" fill="hsl(220, 70%, 50%)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
+              <div className="mt-4 pt-4 border-t flex justify-between">
+                 <span className="text-sm text-muted-foreground">Total Revenue (Period)</span>
+                 <span className="text-lg font-bold">₹{totalRevenue.toLocaleString("en-IN")}</span>
               </div>
             </CardContent>
           </Card>
@@ -71,30 +70,34 @@ export default function Reports() {
               <CardTitle className="text-base">GST Tax Report (CGST + SGST)</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Taxable Value</TableHead>
-                    <TableHead className="text-right">CGST</TableHead>
-                    <TableHead className="text-right">SGST</TableHead>
-                    <TableHead className="text-right">IGST</TableHead>
-                    <TableHead className="text-right">Total Tax</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {taxBreakdown.map((t) => (
-                    <TableRow key={t.category}>
-                      <TableCell className="font-medium">{t.category}</TableCell>
-                      <TableCell className="text-right">₹{t.taxable.toLocaleString("en-IN")}</TableCell>
-                      <TableCell className="text-right">₹{t.cgst.toLocaleString("en-IN")}</TableCell>
-                      <TableCell className="text-right">₹{t.sgst.toLocaleString("en-IN")}</TableCell>
-                      <TableCell className="text-right">₹{t.igst}</TableCell>
-                      <TableCell className="text-right font-semibold">₹{t.total.toLocaleString("en-IN")}</TableCell>
+              {taxBreakdown.length === 0 ? (
+                 <div className="p-8 text-center text-muted-foreground">No tax data available.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="text-right">Taxable Value</TableHead>
+                      <TableHead className="text-right">CGST</TableHead>
+                      <TableHead className="text-right">SGST</TableHead>
+                      <TableHead className="text-right">IGST</TableHead>
+                      <TableHead className="text-right">Total Tax</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {taxBreakdown.map((t: any) => (
+                      <TableRow key={t.category}>
+                        <TableCell className="font-medium">{t.category}</TableCell>
+                        <TableCell className="text-right">₹{Number(t.taxable).toLocaleString("en-IN")}</TableCell>
+                        <TableCell className="text-right">₹{Number(t.cgst).toLocaleString("en-IN")}</TableCell>
+                        <TableCell className="text-right">₹{Number(t.sgst).toLocaleString("en-IN")}</TableCell>
+                        <TableCell className="text-right">₹{Number(t.igst).toLocaleString("en-IN")}</TableCell>
+                        <TableCell className="text-right font-semibold">₹{Number(t.total).toLocaleString("en-IN")}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -102,53 +105,33 @@ export default function Reports() {
         <TabsContent value="items">
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead className="text-right">Qty Sold</TableHead>
-                    <TableHead className="text-right">Revenue</TableHead>
-                    <TableHead className="text-right">Profit</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {itemWise.map((item) => (
-                    <TableRow key={item.name}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell className="text-right">{item.sold}</TableCell>
-                      <TableCell className="text-right">₹{item.revenue.toLocaleString("en-IN")}</TableCell>
-                      <TableCell className="text-right text-success font-semibold">₹{item.profit.toLocaleString("en-IN")}</TableCell>
+              {itemWise.length === 0 ? (
+                 <div className="p-8 text-center text-muted-foreground">No sales data available.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead className="text-right">Qty Sold</TableHead>
+                      <TableHead className="text-right">Revenue</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="pnl">
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <div className="flex justify-between py-2 border-b">
-                <span>Total Revenue</span>
-                <span className="font-bold">₹4,85,200</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span>Cost of Goods Sold</span>
-                <span className="font-bold">₹3,20,000</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span>Gross Profit</span>
-                <span className="font-bold text-success">₹1,65,200</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span>Expenses</span>
-                <span className="font-bold text-destructive">₹45,000</span>
-              </div>
-              <div className="flex justify-between py-2 text-lg">
-                <span className="font-bold">Net Profit</span>
-                <span className="font-bold text-success">₹1,20,200</span>
-              </div>
+                  </TableHeader>
+                  <TableBody>
+                    {itemWise.map((item: any) => (
+                      <TableRow key={item.name}>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell className="text-right">{item.sold}</TableCell>
+                        <TableCell className="text-right font-semibold">₹{Number(item.revenue).toLocaleString("en-IN")}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-muted/50 font-bold">
+                       <TableCell>Total</TableCell>
+                       <TableCell className="text-right">{totalQtySold}</TableCell>
+                       <TableCell className="text-right">₹{totalRevenue.toLocaleString("en-IN")}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

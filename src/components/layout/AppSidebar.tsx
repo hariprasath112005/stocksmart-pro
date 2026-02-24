@@ -37,8 +37,8 @@ export function AppSidebar() {
       <div className="flex items-center gap-2 px-4 h-16 border-b border-sidebar-border">
         <Store className="h-7 w-7 text-sidebar-primary shrink-0" />
         {!collapsed && (
-          <span className="text-lg font-bold text-sidebar-primary-foreground tracking-tight">
-            StockSmart
+          <span className="text-lg font-bold text-sidebar-primary-foreground tracking-tight truncate">
+            Theecal
           </span>
         )}
       </div>

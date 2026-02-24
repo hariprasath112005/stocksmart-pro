@@ -22,31 +22,8 @@ import {
   Cell,
   Legend,
 } from "recharts";
-
-const stats = [
-  { label: "Today's Sales", value: "₹24,580", icon: IndianRupee, change: "+12%" },
-  { label: "Monthly Sales", value: "₹4,85,200", icon: TrendingUp, change: "+8%" },
-  { label: "Inventory Value", value: "₹12,45,000", icon: Package, change: "" },
-  { label: "Cash Drawer", value: "₹15,200", icon: Wallet, change: "" },
-];
-
-const dailySales = [
-  { day: "Mon", amount: 18200 },
-  { day: "Tue", amount: 22500 },
-  { day: "Wed", amount: 19800 },
-  { day: "Thu", amount: 28400 },
-  { day: "Fri", amount: 32100 },
-  { day: "Sat", amount: 38500 },
-  { day: "Sun", amount: 24580 },
-];
-
-const stockPie = [
-  { name: "Electronics", value: 450000 },
-  { name: "Groceries", value: 320000 },
-  { name: "Clothing", value: 280000 },
-  { name: "Stationery", value: 95000 },
-  { name: "Others", value: 100000 },
-];
+import { useDashboard } from "@/hooks/useSales";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PIE_COLORS = [
   "hsl(220, 70%, 50%)",
@@ -56,16 +33,34 @@ const PIE_COLORS = [
   "hsl(0, 72%, 51%)",
 ];
 
-const topSelling = [
-  { name: "Tata Salt 1kg", qty: 142, revenue: "₹2,840" },
-  { name: "Amul Butter 500g", qty: 98, revenue: "₹4,900" },
-  { name: "Maggi Noodles Pack", qty: 85, revenue: "₹1,020" },
-  { name: "Surf Excel 1kg", qty: 72, revenue: "₹5,040" },
-  { name: "Red Label Tea 500g", qty: 65, revenue: "₹9,750" },
-];
-
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { data, isLoading } = useDashboard();
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 w-full" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Skeleton className="h-72 w-full" />
+          <Skeleton className="h-72 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  const { stats, dailySales, topSelling, stockPie } = data || { stats: {}, dailySales: [], topSelling: [], stockPie: [] };
+
+  const statCards = [
+    { label: "Today's Sales", value: `₹${(stats.today || 0).toLocaleString("en-IN")}`, icon: IndianRupee },
+    { label: "Monthly Sales", value: `₹${(stats.month || 0).toLocaleString("en-IN")}`, icon: TrendingUp },
+    { label: "Total Stock Units", value: (stats.totalStock || 0).toLocaleString("en-IN"), icon: Package },
+    { label: "Total Sale Orders", value: (stats.totalSalesCount || 0).toLocaleString("en-IN"), icon: Wallet },
+  ];
 
   return (
     <div className="p-6 space-y-6">
@@ -86,16 +81,13 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
+        {statCards.map((s) => (
           <Card key={s.label}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{s.label}</p>
                   <p className="text-2xl font-bold mt-1">{s.value}</p>
-                  {s.change && (
-                    <span className="text-xs text-success font-medium">{s.change} vs yesterday</span>
-                  )}
                 </div>
                 <div className="h-11 w-11 rounded-lg bg-primary/10 flex items-center justify-center">
                   <s.icon className="h-5 w-5 text-primary" />
@@ -107,10 +99,10 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Daily Sales (This Week)</CardTitle>
+            <CardTitle className="text-base">Daily Sales (Last 7 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
@@ -126,35 +118,6 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Stock Value by Category</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stockPie}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={90}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {stockPie.map((_, i) => (
-                      <Cell key={i} fill={PIE_COLORS[i]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Top Selling */}
@@ -164,7 +127,7 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {topSelling.map((item, i) => (
+            {topSelling.map((item: any, i: number) => (
               <div key={item.name} className="flex items-center justify-between py-2 border-b last:border-0">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-bold text-muted-foreground w-5">{i + 1}</span>
@@ -172,7 +135,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex gap-6 text-sm">
                   <span className="text-muted-foreground">{item.qty} sold</span>
-                  <span className="font-semibold w-20 text-right">{item.revenue}</span>
+                  <span className="font-semibold w-20 text-right">₹{Number(item.revenue).toLocaleString("en-IN")}</span>
                 </div>
               </div>
             ))}

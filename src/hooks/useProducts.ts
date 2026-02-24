@@ -1,18 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type { Product } from "@/types/database";
 import { toast } from "sonner";
+
+const API_URL = "http://localhost:3000/api";
 
 export function useProducts() {
   return useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("name");
-      if (error) throw error;
-      return data as Product[];
+      try {
+        const response = await fetch(`${API_URL}/products`);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Failed to fetch products: ${response.status} ${response.statusText}`);
+        }
+        return response.json() as Promise<Product[]>;
+      } catch (error) {
+        if (error instanceof TypeError && error.message === "Failed to fetch") {
+          throw new Error("Backend server is not reachable. Please make sure the server is running on port 3000.");
+        }
+        throw error;
+      }
     },
   });
 }
@@ -21,13 +29,26 @@ export function useAddProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (product: Omit<Product, "id" | "created_at" | "updated_at">) => {
-      const { data, error } = await supabase
-        .from("products")
-        .insert(product)
-        .select()
-        .single();
-      if (error) throw error;
-      return data as Product;
+      try {
+        const response = await fetch(`${API_URL}/products`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(product),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Failed to add product: ${response.status}`);
+        }
+        return response.json() as Promise<Product>;
+      } catch (error) {
+        if (error instanceof TypeError && error.message === "Failed to fetch") {
+          throw new Error("Backend server is not reachable. Please make sure the server is running on port 3000.");
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -43,20 +64,31 @@ export function useUpdateProductStock() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, stockChange }: { id: string; stockChange: number }) => {
-      // First get current stock
-      const { data: product, error: fetchError } = await supabase
-        .from("products")
-        .select("stock")
-        .eq("id", id)
-        .single();
-      if (fetchError) throw fetchError;
+      // First get current stock from cache or fetch it
+      // For simplicity here, we'll fetch the product first to get current stock
+      // Actually, my API endpoint expects the NEW absolute stock value.
+      // So I need to calculate it first.
       
-      const newStock = (product as { stock: number }).stock + stockChange;
-      const { error } = await supabase
-        .from("products")
-        .update({ stock: newStock })
-        .eq("id", id);
-      if (error) throw error;
+      const products = queryClient.getQueryData<Product[]>(["products"]);
+      const product = products?.find((p) => p.id === id);
+
+      if (!product) {
+        throw new Error("Product not found in cache");
+      }
+
+      const newStock = product.stock + stockChange;
+
+      const response = await fetch(`${API_URL}/products/${id}/stock`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ stock: newStock }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update stock");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });

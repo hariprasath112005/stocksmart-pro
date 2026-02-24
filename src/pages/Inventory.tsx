@@ -15,18 +15,16 @@ const LOW_STOCK_THRESHOLD = 15;
 
 export default function Inventory() {
   const [search, setSearch] = useState("");
-  const { data: products = [], isLoading } = useProducts();
+  const { data: products = [], isLoading, error } = useProducts();
 
-  const filtered = products.filter(
+  const filtered = Array.isArray(products) ? products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.code.toLowerCase().includes(search.toLowerCase()) ||
       p.category.toLowerCase().includes(search.toLowerCase())
-  );
+  ) : [];
 
-  const lowStockCount = products.filter((p) => p.stock <= LOW_STOCK_THRESHOLD).length;
-  const totalValue = products.reduce((s, p) => s + p.cost_price * p.stock, 0);
-  const totalSellValue = products.reduce((s, p) => s + p.sell_price * p.stock, 0);
+  const lowStockCount = filtered.filter((p) => p.stock <= LOW_STOCK_THRESHOLD).length;
 
   return (
     <div className="p-6 space-y-6">
@@ -43,14 +41,29 @@ export default function Inventory() {
         </div>
       </div>
 
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/10">
+          <CardContent className="p-4 flex items-center gap-3 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            <div className="text-sm">
+              <p className="font-semibold">Backend Connection Issue</p>
+              <p>{(error as Error).message}</p>
+            </div>
+            <Button size="sm" variant="outline" className="ml-auto border-destructive/50 hover:bg-destructive/20" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <Package className="h-8 w-8 text-primary" />
             <div>
               <p className="text-sm text-muted-foreground">Total Products</p>
-              <p className="text-xl font-bold">{products.length}</p>
+              <p className="text-xl font-bold">{filtered.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -61,12 +74,6 @@ export default function Inventory() {
               <p className="text-sm text-muted-foreground">Low Stock Items</p>
               <p className="text-xl font-bold">{lowStockCount}</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">Stock Value (Cost / Sell)</p>
-            <p className="text-lg font-bold">₹{totalValue.toLocaleString("en-IN")} / ₹{totalSellValue.toLocaleString("en-IN")}</p>
           </CardContent>
         </Card>
       </div>
@@ -92,6 +99,10 @@ export default function Inventory() {
             <div className="p-4 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              {error ? "No products found due to connection error." : "No products found. Add your first product to get started!"}
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -99,9 +110,7 @@ export default function Inventory() {
                   <TableHead>Product</TableHead>
                   <TableHead>Code</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Cost</TableHead>
-                  <TableHead className="text-right">Sell</TableHead>
-                  <TableHead className="text-right">GST</TableHead>
+                  <TableHead className="text-right">Default GST</TableHead>
                   <TableHead className="text-right">Stock</TableHead>
                   <TableHead>Warehouse</TableHead>
                 </TableRow>
@@ -114,8 +123,6 @@ export default function Inventory() {
                     <TableCell>
                       <Badge variant="secondary">{p.category}</Badge>
                     </TableCell>
-                    <TableCell className="text-right">₹{p.cost_price}</TableCell>
-                    <TableCell className="text-right">₹{p.sell_price}</TableCell>
                     <TableCell className="text-right">{p.gst_rate}%</TableCell>
                     <TableCell className="text-right">
                       <span className={p.stock <= LOW_STOCK_THRESHOLD ? "text-destructive font-semibold" : ""}>
@@ -133,3 +140,4 @@ export default function Inventory() {
     </div>
   );
 }
+

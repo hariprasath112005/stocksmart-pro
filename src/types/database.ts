@@ -3,8 +3,6 @@ export interface Product {
   name: string;
   code: string;
   category: string;
-  cost_price: number;
-  sell_price: number;
   gst_rate: number;
   stock: number;
   warehouse: string;

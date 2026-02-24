@@ -15,30 +15,30 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Business Name</Label>
-            <Input defaultValue="StockSmart Retail Store" />
+            <Input defaultValue="Theecal Powersystems and Marketing" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>GSTIN</Label>
-              <Input defaultValue="27AABCU9603R1ZM" />
+              <Input defaultValue="NOT SET" />
             </div>
             <div className="space-y-2">
               <Label>State Code</Label>
-              <Input defaultValue="27 - Maharashtra" />
+              <Input defaultValue="NOT SET" />
             </div>
           </div>
           <div className="space-y-2">
             <Label>Address</Label>
-            <Input defaultValue="123, Market Road, Mumbai - 400001" />
+            <Input defaultValue="Your Business Address" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Phone</Label>
-              <Input defaultValue="+91 98765 43210" />
+              <Input defaultValue="+91" />
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
-              <Input defaultValue="billing@stocksmart.in" />
+              <Input defaultValue="contact@theecal.in" />
             </div>
           </div>
           <Button>Save Changes</Button>

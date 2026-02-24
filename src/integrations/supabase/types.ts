@@ -18,12 +18,10 @@ export type Database = {
         Row: {
           category: string
           code: string
-          cost_price: number
           created_at: string
           gst_rate: number
           id: string
           name: string
-          sell_price: number
           stock: number
           updated_at: string
           warehouse: string
@@ -31,12 +29,10 @@ export type Database = {
         Insert: {
           category?: string
           code: string
-          cost_price?: number
           created_at?: string
           gst_rate?: number
           id?: string
           name: string
-          sell_price?: number
           stock?: number
           updated_at?: string
           warehouse?: string
@@ -44,12 +40,10 @@ export type Database = {
         Update: {
           category?: string
           code?: string
-          cost_price?: number
           created_at?: string
           gst_rate?: number
           id?: string
           name?: string
-          sell_price?: number
           stock?: number
           updated_at?: string
           warehouse?: string

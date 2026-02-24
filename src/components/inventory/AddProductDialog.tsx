@@ -18,8 +18,6 @@ export function AddProductDialog() {
     name: "",
     code: "",
     category: "General",
-    cost_price: "",
-    sell_price: "",
     gst_rate: "18",
     stock: "",
     warehouse: "Main Store",
@@ -27,15 +25,13 @@ export function AddProductDialog() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.code || !form.sell_price) return;
+    if (!form.name || !form.code) return;
 
     addProduct.mutate(
       {
         name: form.name,
         code: form.code,
         category: form.category,
-        cost_price: Number(form.cost_price) || 0,
-        sell_price: Number(form.sell_price),
         gst_rate: Number(form.gst_rate),
         stock: Number(form.stock) || 0,
         warehouse: form.warehouse,
@@ -43,7 +39,7 @@ export function AddProductDialog() {
       {
         onSuccess: () => {
           setOpen(false);
-          setForm({ name: "", code: "", category: "General", cost_price: "", sell_price: "", gst_rate: "18", stock: "", warehouse: "Main Store" });
+          setForm({ name: "", code: "", category: "General", gst_rate: "18", stock: "", warehouse: "Main Store" });
         },
       }
     );
@@ -91,17 +87,13 @@ export function AddProductDialog() {
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Cost Price (₹)</Label>
-              <Input type="number" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: e.target.value })} min={0} />
+              <Label>Opening Stock</Label>
+              <Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} min={0} />
             </div>
             <div className="space-y-1.5">
-              <Label>Sell Price (₹) *</Label>
-              <Input type="number" value={form.sell_price} onChange={(e) => setForm({ ...form, sell_price: e.target.value })} min={0} required />
-            </div>
-            <div className="space-y-1.5">
-              <Label>GST Rate</Label>
+              <Label>Default GST Rate</Label>
               <Select value={form.gst_rate} onValueChange={(v) => setForm({ ...form, gst_rate: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -109,10 +101,6 @@ export function AddProductDialog() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Opening Stock</Label>
-            <Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} min={0} />
           </div>
           <Button type="submit" className="w-full" disabled={addProduct.isPending}>
             {addProduct.isPending ? "Adding..." : "Add Product"}

@@ -11,6 +11,7 @@ import { AdHocItemDialog } from "@/components/pos/AdHocItemDialog";
 import { generateInvoicePdf } from "@/lib/generateInvoicePdf";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CartItem } from "@/types/database";
+import { toast } from "sonner";
 
 export default function POS() {
   const [search, setSearch] = useState("");
@@ -39,7 +40,7 @@ export default function POS() {
           id: product.id,
           name: product.name,
           code: product.code,
-          price: product.sell_price,
+          price: 0, // Price is set during sale
           qty: 1,
           discount: 0,
           gstRate: product.gst_rate,
@@ -56,6 +57,14 @@ export default function POS() {
   const updateQty = (id: string, qty: number) => {
     if (qty <= 0) return removeFromCart(id);
     setCart(cart.map((c) => (c.id === id ? { ...c, qty } : c)));
+  };
+
+  const updatePrice = (id: string, price: number) => {
+    setCart(cart.map((c) => (c.id === id ? { ...c, price } : c)));
+  };
+
+  const updateGstRate = (id: string, gstRate: number) => {
+    setCart(cart.map((c) => (c.id === id ? { ...c, gstRate } : c)));
   };
 
   const updateDiscount = (id: string, discount: number) => {
@@ -91,6 +100,8 @@ export default function POS() {
       balance: paid - grandTotal,
       customerName,
     });
+
+    toast.info("Downloading invoice...");
 
     // Generate PDF
     generateInvoicePdf({
@@ -148,8 +159,7 @@ export default function POS() {
                     <span className="text-xs text-muted-foreground">{p.code}</span>
                     <Badge variant="secondary" className="text-xs">GST {p.gst_rate}%</Badge>
                   </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-lg font-bold">₹{p.sell_price}</p>
+                  <div className="flex items-center justify-end mt-2">
                     <span className={`text-xs ${p.stock <= 15 ? "text-destructive" : "text-muted-foreground"}`}>
                       Stock: {p.stock}
                     </span>
@@ -162,7 +172,7 @@ export default function POS() {
       </div>
 
       {/* Right: Cart & Billing */}
-      <Card className="w-96 flex flex-col shrink-0">
+      <Card className="w-[450px] flex flex-col shrink-0">
         <CardHeader className="pb-2 border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Current Sale</CardTitle>
@@ -185,33 +195,63 @@ export default function POS() {
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.id} className="flex items-start gap-2 p-2 rounded-md bg-muted/50">
-                <div className="flex-1 min-w-0">
+              <div key={item.id} className="flex flex-col gap-2 p-2 rounded-md bg-muted/50">
+                <div className="flex items-center justify-between">
                   <p className="text-sm font-medium truncate">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    ₹{item.price} × {item.qty}
-                    {item.productId === null && <Badge variant="outline" className="ml-1 text-[10px] py-0">Ad-hoc</Badge>}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Input
-                    type="number"
-                    value={item.qty}
-                    onChange={(e) => updateQty(item.id, Number(e.target.value))}
-                    className="w-14 h-7 text-xs text-center"
-                    min={1}
-                  />
-                  <Input
-                    type="number"
-                    value={item.discount}
-                    onChange={(e) => updateDiscount(item.id, Number(e.target.value))}
-                    className="w-14 h-7 text-xs text-center"
-                    placeholder="Disc"
-                    min={0}
-                  />
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeFromCart(item.id)}>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeFromCart(item.id)}>
                     <X className="h-3 w-3" />
                   </Button>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">Price</label>
+                    <Input
+                      type="number"
+                      value={item.price || ""}
+                      onChange={(e) => updatePrice(item.id, Number(e.target.value))}
+                      className="h-7 text-xs"
+                      placeholder="Price"
+                      min={0}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">Qty</label>
+                    <Input
+                      type="number"
+                      value={item.qty}
+                      onChange={(e) => updateQty(item.id, Number(e.target.value))}
+                      className="h-7 text-xs"
+                      min={1}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">GST %</label>
+                    <Select value={String(item.gstRate)} onValueChange={(v) => updateGstRate(item.id, Number(v))}>
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[0, 5, 12, 18, 28].map(r => (
+                          <SelectItem key={r} value={String(r)} className="text-xs">{r}%</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-muted-foreground">Disc.</label>
+                    <Input
+                      type="number"
+                      value={item.discount || ""}
+                      onChange={(e) => updateDiscount(item.id, Number(e.target.value))}
+                      className="h-7 text-xs"
+                      placeholder="Disc"
+                      min={0}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center text-[11px] font-semibold border-t pt-1 mt-1">
+                  <span className="text-muted-foreground uppercase">Item Total:</span>
+                  <span>₹{((item.price * item.qty - item.discount) * (1 + item.gstRate/100)).toFixed(2)}</span>
                 </div>
               </div>
             ))
