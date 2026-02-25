@@ -5,16 +5,36 @@ import { toast } from "sonner";
 const API_URL = "http://localhost:3000/api";
 
 interface CompleteSaleInput {
-  cart: CartItem[];
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  dueDate?: string;
+  financialYear: string;
+  paymentMode: string;
+  placeOfSupply: string;
+  reverseCharge: boolean;
+  referenceNumber?: string;
+  deliveryNoteNumber?: string;
+  transportName?: string;
+  vehicleNumber?: string;
+  lrNumber?: string;
+  ewayBillNumber?: string;
+  customerId?: string;
+  customerName: string;
+  billingAddress?: string;
+  shippingAddress?: string;
+  customerGstin?: string;
+  customerState?: string;
+  customerStateCode?: string;
   subtotal: number;
-  totalGST: number;
+  taxableTotal: number;
+  totalGst: number;
   cgst: number;
   sgst: number;
+  igst: number;
+  roundOff: number;
   grandTotal: number;
-  paymentMethod: string;
-  amountPaid: number;
-  balance: number;
-  customerName: string;
+  grandTotalWords: string;
+  cart: CartItem[];
 }
 
 export function useCompleteSale() {

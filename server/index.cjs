@@ -31,11 +31,42 @@ async function initializeDatabase() {
     await connection.changeUser({ database: 'theecal_db' });
 
     const createTablesQuery = `
+      CREATE TABLE IF NOT EXISTS company_settings (
+        id VARCHAR(36) PRIMARY KEY,
+        company_name VARCHAR(255) NOT NULL,
+        unit_name VARCHAR(255),
+        address TEXT,
+        gstin VARCHAR(15),
+        state VARCHAR(50),
+        state_code VARCHAR(2),
+        phone VARCHAR(20),
+        email VARCHAR(100),
+        bank_name VARCHAR(100),
+        account_no VARCHAR(50),
+        ifsc_code VARCHAR(20),
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS customers (
+        id VARCHAR(36) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        billing_address TEXT,
+        shipping_address TEXT,
+        gstin VARCHAR(15),
+        state VARCHAR(50),
+        state_code VARCHAR(2),
+        phone VARCHAR(20),
+        email VARCHAR(100),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      );
+
       CREATE TABLE IF NOT EXISTS products (
         id VARCHAR(36) PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         code VARCHAR(50) NOT NULL UNIQUE,
         category VARCHAR(50) NOT NULL DEFAULT 'General',
+        hsn_code VARCHAR(20),
         gst_rate DECIMAL(5,2) NOT NULL DEFAULT 0,
         stock INT NOT NULL DEFAULT 0,
         warehouse VARCHAR(50) NOT NULL DEFAULT 'Main Store',
@@ -46,17 +77,36 @@ async function initializeDatabase() {
       CREATE TABLE IF NOT EXISTS sales (
         id VARCHAR(36) PRIMARY KEY,
         invoice_number VARCHAR(50) NOT NULL UNIQUE,
+        invoice_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+        due_date DATETIME,
+        financial_year VARCHAR(10),
+        payment_mode VARCHAR(50) NOT NULL DEFAULT 'cash',
+        place_of_supply VARCHAR(50),
+        reverse_charge BOOLEAN DEFAULT FALSE,
+        reference_number VARCHAR(50),
+        delivery_note_number VARCHAR(50),
+        transport_name VARCHAR(100),
+        vehicle_number VARCHAR(50),
+        lr_number VARCHAR(50),
+        eway_bill_number VARCHAR(50),
+        customer_id VARCHAR(36),
         customer_name VARCHAR(100) NOT NULL DEFAULT 'Walk-in',
+        billing_address TEXT,
+        shipping_address TEXT,
+        customer_gstin VARCHAR(15),
+        customer_state VARCHAR(50),
+        customer_state_code VARCHAR(2),
         subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
         total_gst DECIMAL(10,2) NOT NULL DEFAULT 0,
         cgst DECIMAL(10,2) NOT NULL DEFAULT 0,
         sgst DECIMAL(10,2) NOT NULL DEFAULT 0,
+        igst DECIMAL(10,2) NOT NULL DEFAULT 0,
+        round_off DECIMAL(10,2) NOT NULL DEFAULT 0,
         grand_total DECIMAL(10,2) NOT NULL DEFAULT 0,
-        payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
-        amount_paid DECIMAL(10,2) NOT NULL DEFAULT 0,
-        balance DECIMAL(10,2) NOT NULL DEFAULT 0,
+        grand_total_words TEXT,
         status VARCHAR(20) NOT NULL DEFAULT 'completed',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (customer_id) REFERENCES customers(id)
       );
 
       CREATE TABLE IF NOT EXISTS sale_items (
@@ -65,10 +115,16 @@ async function initializeDatabase() {
         product_id VARCHAR(36),
         product_name VARCHAR(255) NOT NULL,
         product_code VARCHAR(50) NOT NULL DEFAULT '',
-        price DECIMAL(10,2) NOT NULL,
+        hsn_code VARCHAR(20),
         qty INT NOT NULL DEFAULT 1,
+        unit VARCHAR(20) DEFAULT 'PCS',
+        price DECIMAL(10,2) NOT NULL,
         discount DECIMAL(10,2) NOT NULL DEFAULT 0,
+        taxable_value DECIMAL(10,2) NOT NULL DEFAULT 0,
         gst_rate DECIMAL(5,2) NOT NULL DEFAULT 0,
+        cgst DECIMAL(10,2) NOT NULL DEFAULT 0,
+        sgst DECIMAL(10,2) NOT NULL DEFAULT 0,
+        igst DECIMAL(10,2) NOT NULL DEFAULT 0,
         line_total DECIMAL(10,2) NOT NULL DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
@@ -78,21 +134,63 @@ async function initializeDatabase() {
 
     await connection.query(createTablesQuery);
 
-    // Migration: Remove cost_price and sell_price if they exist
-    try {
-      const [columns] = await connection.query('SHOW COLUMNS FROM products');
-      const columnNames = columns.map(c => c.Field);
-      
-      if (columnNames.includes('cost_price')) {
-        await connection.query('ALTER TABLE products DROP COLUMN cost_price');
-        console.log('Dropped cost_price from products');
-      }
-      if (columnNames.includes('sell_price')) {
-        await connection.query('ALTER TABLE products DROP COLUMN sell_price');
-        console.log('Dropped sell_price from products');
-      }
-    } catch (migErr) {
-      console.error('Migration error (ignoring):', migErr);
+    // Migration/Updates: Add columns to existing tables if they don't exist
+    const [tables] = await connection.query('SHOW TABLES');
+    const tableNames = tables.map(t => Object.values(t)[0]);
+
+    const ensureColumn = async (tableName, columnName, definition) => {
+        const [columns] = await connection.query(`SHOW COLUMNS FROM ${tableName}`);
+        const columnNames = columns.map(c => c.Field);
+        if (!columnNames.includes(columnName)) {
+            await connection.query(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+            console.log(`Added column ${columnName} to ${tableName}`);
+        }
+    };
+
+    if (tableNames.includes('products')) {
+        await ensureColumn('products', 'hsn_code', 'VARCHAR(20)');
+    }
+    if (tableNames.includes('sales')) {
+        await ensureColumn('sales', 'invoice_date', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
+        await ensureColumn('sales', 'due_date', 'DATETIME');
+        await ensureColumn('sales', 'financial_year', 'VARCHAR(10)');
+        await ensureColumn('sales', 'payment_mode', "VARCHAR(50) NOT NULL DEFAULT 'cash'");
+        await ensureColumn('sales', 'place_of_supply', 'VARCHAR(50)');
+        await ensureColumn('sales', 'reverse_charge', 'BOOLEAN DEFAULT FALSE');
+        await ensureColumn('sales', 'reference_number', 'VARCHAR(50)');
+        await ensureColumn('sales', 'delivery_note_number', 'VARCHAR(50)');
+        await ensureColumn('sales', 'transport_name', 'VARCHAR(100)');
+        await ensureColumn('sales', 'vehicle_number', 'VARCHAR(50)');
+        await ensureColumn('sales', 'lr_number', 'VARCHAR(50)');
+        await ensureColumn('sales', 'eway_bill_number', 'VARCHAR(50)');
+        await ensureColumn('sales', 'customer_id', 'VARCHAR(36)');
+        await ensureColumn('sales', 'billing_address', 'TEXT');
+        await ensureColumn('sales', 'shipping_address', 'TEXT');
+        await ensureColumn('sales', 'customer_gstin', 'VARCHAR(15)');
+        await ensureColumn('sales', 'customer_state', 'VARCHAR(50)');
+        await ensureColumn('sales', 'customer_state_code', 'VARCHAR(2)');
+        await ensureColumn('sales', 'igst', 'DECIMAL(10,2) NOT NULL DEFAULT 0');
+        await ensureColumn('sales', 'round_off', 'DECIMAL(10,2) NOT NULL DEFAULT 0');
+        await ensureColumn('sales', 'grand_total_words', 'TEXT');
+    }
+    if (tableNames.includes('sale_items')) {
+        await ensureColumn('sale_items', 'hsn_code', 'VARCHAR(20)');
+        await ensureColumn('sale_items', 'unit', "VARCHAR(20) DEFAULT 'PCS'");
+        await ensureColumn('sale_items', 'taxable_value', 'DECIMAL(10,2) NOT NULL DEFAULT 0');
+        await ensureColumn('sale_items', 'cgst', 'DECIMAL(10,2) NOT NULL DEFAULT 0');
+        await ensureColumn('sale_items', 'sgst', 'DECIMAL(10,2) NOT NULL DEFAULT 0');
+        await ensureColumn('sale_items', 'igst', 'DECIMAL(10,2) NOT NULL DEFAULT 0');
+    }
+
+    // Seed default company settings if empty
+    const [settings] = await connection.query('SELECT COUNT(*) as count FROM company_settings');
+    if (settings[0].count === 0) {
+        const id = uuidv4();
+        await connection.query(`
+            INSERT INTO company_settings (id, company_name, address, gstin, state, state_code, phone, email)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [id, 'Theecal Powersystems', '123 Solar Way, Chennai', '33AAAAA0000A1Z5', 'Tamil Nadu', '33', '9876543210', 'info@theecal.in']);
+        console.log('Seeded default company settings');
     }
 
     console.log('Database and tables initialized.');
@@ -132,15 +230,15 @@ app.get('/api/products', async (req, res) => {
 // Add a product
 app.post('/api/products', async (req, res) => {
   try {
-    const { name, code, category, gst_rate, stock, warehouse } = req.body;
+    const { name, code, category, gst_rate, stock, warehouse, hsn_code } = req.body;
     
     if (!name || !code) {
       return res.status(400).json({ error: 'Name and Code are required.' });
     }
 
     const id = uuidv4();
-    const sql = `INSERT INTO products (id, name, code, category, gst_rate, stock, warehouse) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-    await query(sql, [id, name, code, category, gst_rate, stock, warehouse]);
+    const sql = `INSERT INTO products (id, name, code, category, gst_rate, stock, warehouse, hsn_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+    await query(sql, [id, name, code, category, gst_rate, stock, warehouse, hsn_code]);
     
     const [newProduct] = await query('SELECT * FROM products WHERE id = ?', [id]);
     res.status(201).json(newProduct);
@@ -151,6 +249,57 @@ app.post('/api/products', async (req, res) => {
     } else {
       res.status(500).json({ error: err.message });
     }
+  }
+});
+
+// --- CUSTOMERS API ---
+
+app.get('/api/customers', async (req, res) => {
+  try {
+    const customers = await query('SELECT * FROM customers ORDER BY name ASC');
+    res.json(customers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/customers', async (req, res) => {
+  try {
+    const { name, billing_address, shipping_address, gstin, state, state_code, phone, email } = req.body;
+    const id = uuidv4();
+    const sql = `INSERT INTO customers (id, name, billing_address, shipping_address, gstin, state, state_code, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    await query(sql, [id, name, billing_address, shipping_address, gstin, state, state_code, phone, email]);
+    const [newCustomer] = await query('SELECT * FROM customers WHERE id = ?', [id]);
+    res.status(201).json(newCustomer);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- SETTINGS API ---
+
+app.get('/api/settings', async (req, res) => {
+  try {
+    const [settings] = await query('SELECT * FROM company_settings LIMIT 1');
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/settings', async (req, res) => {
+  try {
+    const { id, company_name, unit_name, address, gstin, state, state_code, phone, email, bank_name, account_no, ifsc_code } = req.body;
+    const sql = `
+      UPDATE company_settings 
+      SET company_name = ?, unit_name = ?, address = ?, gstin = ?, state = ?, state_code = ?, phone = ?, email = ?, bank_name = ?, account_no = ?, ifsc_code = ?
+      WHERE id = ?
+    `;
+    await query(sql, [company_name, unit_name, address, gstin, state, state_code, phone, email, bank_name, account_no, ifsc_code, id]);
+    const [updated] = await query('SELECT * FROM company_settings WHERE id = ?', [id]);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -173,7 +322,7 @@ app.patch('/api/products/:id/stock', async (req, res) => {
 
 // --- SALES API ---
 
-// Create a new sale
+// Create a new sale (GST Invoice)
 app.post('/api/sales', async (req, res) => {
   if (!pool) pool = mysql.createPool(dbConfig);
   const connection = await pool.getConnection();
@@ -181,70 +330,128 @@ app.post('/api/sales', async (req, res) => {
     await connection.beginTransaction();
 
     const {
-      customerName, subtotal, totalGST, cgst, sgst, grandTotal,
-      paymentMethod, amountPaid, balance, cart
+      invoiceDate, dueDate, financialYear, paymentMode, placeOfSupply,
+      reverseCharge, referenceNumber, deliveryNoteNumber, transportName,
+      vehicleNumber, lrNumber, ewayBillNumber,
+      customerId, customerName, billingAddress, shippingAddress,
+      customerGstin, customerState, customerStateCode,
+      subtotal, taxableTotal, totalGst, cgst, sgst, igst, roundOff,
+      grandTotal, grandTotalWords, cart
     } = req.body;
 
-    // Generate Invoice Number
-    const now = new Date();
-    const y = now.getFullYear().toString().slice(-2);
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
-    const rand = Math.floor(Math.random() * 9000 + 1000);
-    const invoiceNumber = `INV-${y}${m}${d}-${rand}`;
+    // Generate Invoice Number (if not provided)
+    let invoiceNumber = req.body.invoiceNumber;
+    if (!invoiceNumber) {
+        const now = new Date();
+        const y = now.getFullYear().toString().slice(-2);
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        const rand = Math.floor(Math.random() * 9000 + 1000);
+        invoiceNumber = `INV-${y}${m}${d}-${rand}`;
+    }
 
     const saleId = uuidv4();
     
     // Insert Sale
     const saleSql = `
-      INSERT INTO sales (id, invoice_number, customer_name, subtotal, total_gst, cgst, sgst, grand_total, payment_method, amount_paid, balance, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')
+      INSERT INTO sales (
+        id, invoice_number, invoice_date, due_date, financial_year, payment_mode,
+        place_of_supply, reverse_charge, reference_number, delivery_note_number,
+        transport_name, vehicle_number, lr_number, eway_bill_number,
+        customer_id, customer_name, billing_address, shipping_address,
+        customer_gstin, customer_state, customer_state_code,
+        subtotal, total_gst, cgst, sgst, igst, round_off,
+        grand_total, grand_total_words, status
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')
     `;
     
     await connection.execute(saleSql, [
-      saleId, invoiceNumber, customerName, subtotal, totalGST, cgst, sgst, grandTotal, paymentMethod, amountPaid, balance
+      saleId, 
+      invoiceNumber, 
+      invoiceDate || new Date(), 
+      dueDate || null, 
+      financialYear || null, 
+      paymentMode || 'cash',
+      placeOfSupply || null, 
+      reverseCharge || false, 
+      referenceNumber || null, 
+      deliveryNoteNumber || null,
+      transportName || null, 
+      vehicleNumber || null, 
+      lrNumber || null, 
+      ewayBillNumber || null,
+      customerId || null, 
+      customerName || 'Walk-in', 
+      billingAddress || null, 
+      shippingAddress || null,
+      customerGstin || null, 
+      customerState || null, 
+      customerStateCode || null,
+      taxableTotal || subtotal, 
+      totalGst || 0, 
+      cgst || 0, 
+      sgst || 0, 
+      igst || 0, 
+      roundOff || 0,
+      grandTotal || 0, 
+      grandTotalWords || null
     ]);
 
     // Insert Sale Items
     const itemSql = `
-      INSERT INTO sale_items (id, sale_id, product_id, product_name, product_code, price, qty, discount, gst_rate, line_total)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO sale_items (
+        id, sale_id, product_id, product_name, product_code, hsn_code,
+        qty, unit, price, discount, taxable_value, gst_rate,
+        cgst, sgst, igst, line_total
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const insertedItems = [];
 
     for (const item of cart) {
       const itemId = uuidv4();
-      const lineTotal = (item.price * item.qty) - item.discount;
       
       await connection.execute(itemSql, [
-        itemId, saleId, item.productId, item.name, item.code, item.price, item.qty, item.discount, item.gstRate, lineTotal
+        itemId, 
+        saleId, 
+        item.productId || null, 
+        item.name, 
+        item.code || '', 
+        item.hsnCode || null,
+        item.qty || 1, 
+        item.unit || 'PCS', 
+        item.price || 0, 
+        item.discount || 0,
+        item.taxableValue || 0, 
+        item.gstRate || 0,
+        item.cgst || 0, 
+        item.sgst || 0, 
+        item.igst || 0,
+        item.lineTotal || (item.taxableValue + (item.cgst || 0) + (item.sgst || 0) + (item.igst || 0))
       ]);
       
       insertedItems.push({ id: itemId, ...item });
 
       // Update Stock
       if (item.productId) {
-         // This is a simplified "update stock" logic.
-         // In a real app, you might want to read the current stock inside the transaction to prevent race conditions.
-         // For now, simple update is fine.
          await connection.execute('UPDATE products SET stock = stock - ? WHERE id = ?', [item.qty, item.productId]);
       }
     }
 
     await connection.commit();
     
-    // Return the created sale object structure expected by the frontend
     const [saleRows] = await connection.execute('SELECT * FROM sales WHERE id = ?', [saleId]);
     
     res.status(201).json({ sale: saleRows[0], items: insertedItems });
 
   } catch (err) {
-    await connection.rollback();
+    if (connection) await connection.rollback();
     console.error(err);
     res.status(500).json({ error: err.message });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 

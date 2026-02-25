@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus } from "lucide-react";
 import { useAddProduct } from "@/hooks/useProducts";
 
-const categories = ["Groceries", "Dairy", "Beverages", "Household", "Electronics", "Stationery", "General"];
-const warehouses = ["Main Store", "Warehouse B"];
+const categories = ["Solar Panels", "Inverters", "Batteries", "Cables", "Accessories", "General"];
+const warehouses = ["Main Store"];
 const gstRates = [0, 5, 12, 18, 28];
 
 export function AddProductDialog() {
@@ -21,6 +21,7 @@ export function AddProductDialog() {
     gst_rate: "18",
     stock: "",
     warehouse: "Main Store",
+    hsn_code: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,11 +36,12 @@ export function AddProductDialog() {
         gst_rate: Number(form.gst_rate),
         stock: Number(form.stock) || 0,
         warehouse: form.warehouse,
+        hsn_code: form.hsn_code,
       },
       {
         onSuccess: () => {
           setOpen(false);
-          setForm({ name: "", code: "", category: "General", gst_rate: "18", stock: "", warehouse: "Main Store" });
+          setForm({ name: "", code: "", category: "General", gst_rate: "18", stock: "", warehouse: "Main Store", hsn_code: "" });
         },
       }
     );
@@ -60,11 +62,11 @@ export function AddProductDialog() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Product Name *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Tata Salt 1kg" required />
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </div>
             <div className="space-y-1.5">
               <Label>Product Code *</Label>
-              <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="e.g. TS001" required />
+              <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -92,6 +94,12 @@ export function AddProductDialog() {
               <Label>Opening Stock</Label>
               <Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} min={0} />
             </div>
+            <div className="space-y-1.5">
+              <Label>HSN Code</Label>
+              <Input value={form.hsn_code} onChange={(e) => setForm({ ...form, hsn_code: e.target.value })} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3">
             <div className="space-y-1.5">
               <Label>Default GST Rate</Label>
               <Select value={form.gst_rate} onValueChange={(v) => setForm({ ...form, gst_rate: v })}>

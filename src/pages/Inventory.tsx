@@ -9,6 +9,7 @@ import {
 import { Search, Package, AlertTriangle, ArrowRightLeft } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { AddProductDialog } from "@/components/inventory/AddProductDialog";
+import { UpdateStockDialog } from "@/components/inventory/UpdateStockDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const LOW_STOCK_THRESHOLD = 15;
@@ -125,9 +126,12 @@ export default function Inventory() {
                     </TableCell>
                     <TableCell className="text-right">{p.gst_rate}%</TableCell>
                     <TableCell className="text-right">
-                      <span className={p.stock <= LOW_STOCK_THRESHOLD ? "text-destructive font-semibold" : ""}>
-                        {p.stock}
-                      </span>
+                      <div className="flex items-center justify-end gap-2">
+                        <span className={p.stock <= LOW_STOCK_THRESHOLD ? "text-destructive font-semibold" : ""}>
+                          {p.stock}
+                        </span>
+                        <UpdateStockDialog product={p} />
+                      </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs">{p.warehouse}</TableCell>
                   </TableRow>
