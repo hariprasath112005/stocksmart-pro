@@ -1,0 +1,98 @@
+INSERT INTO products (id, name, code, category, gst_rate, stock, warehouse) VALUES
+    2 -- MOTORS / PUMPS (GST 12%)
+    3 (UUID(), 'Sharp Crystal 0.5 HP Water Pump Motor', 'SC05HP', 'Motors / Pumps', 12, 100, 'Main Store'),
+    4 (UUID(), 'Sharp Crystal 1 HP Water Pump Motor', 'SC1HP', 'Motors / Pumps', 12, 100, 'Main Store'),
+    5 (UUID(), 'Sharp Crystal 1 HP Special Water Pump Motor', 'SC1HPS', 'Motors / Pumps', 12, 100, 'Main Store'),
+    6 (UUID(), 'C.R.I 0.5 HP Water Pump Motor', 'CRI05HP', 'Motors / Pumps', 12, 100, 'Main Store'),
+    7 (UUID(), 'C.R.I 1 HP Water Pump Motor', 'CRI1HP', 'Motors / Pumps', 12, 100, 'Main Store'),
+    8 (UUID(), '1 HP Openwell Submersible Pump', 'OWP1HP', 'Motors / Pumps', 12, 100, 'Main Store'),
+    9 (UUID(), '0.5 HP Booster Water Pump', 'BWP05HP', 'Motors / Pumps', 12, 100, 'Main Store'),
+   10 (UUID(), '1 HP Booster Water Pump', 'BWP1HP', 'Motors / Pumps', 12, 100, 'Main Store'),
+   11 (UUID(), '1 HP Submersible Pump Motor', 'SUBM1HP', 'Motors / Pumps', 12, 100, 'Main Store'),
+   12 (UUID(), '1.5 HP Submersible Pump Motor', 'SUBM15HP', 'Motors / Pumps', 12, 100, 'Main Store'),
+   13
+   14 -- CAPACITOR BOXES (GST 18%)
+   15 (UUID(), 'Capacitor Starter Box for 1 HP Motor', 'CSB1HP', 'Capacitor Boxes', 18, 100, 'Main Store'),
+   16 (UUID(), 'Capacitor Starter Box for 1.5 HP Motor', 'CSB15HP', 'Capacitor Boxes', 18, 100, 'Main Store'),
+   17
+   18 -- CABLES (GST 18%)
+   19 (UUID(), '3 Core Flat Cable – 1.5 Sq.mm', '3C15SQ', 'Cables', 18, 100, 'Main Store'),
+   20 (UUID(), '3 Core Flat Cable – 2.5 Sq.mm', '3C25SQ', 'Cables', 18, 100, 'Main Store'),
+   21
+   22 -- SINICON CONTROLLERS (GST 18%)
+   23 (UUID(), 'Sinicon Automatic Water Level & Pump Controller', 'SINAS', 'Controllers', 18, 100, 'Main Store'),
+   24 (UUID(), 'Sinicon Fluid Level Controller', 'SINF', 'Controllers', 18, 100, 'Main Store'),
+   25
+   26 -- BATTERIES (GST 28%)
+   27 (UUID(), 'Powerzone 2.5 Ah Battery', 'PZ25AH', 'Batteries', 28, 100, 'Main Store'),
+   28 (UUID(), 'Powerzone Z4L Battery', 'PZZ4L', 'Batteries', 28, 100, 'Main Store'),
+   29 (UUID(), 'Powerzone Z5L Battery', 'PZZ5L', 'Batteries', 28, 100, 'Main Store'),
+   30 (UUID(), 'Powerzone 5L-B Battery', 'PZ5LB', 'Batteries', 28, 100, 'Main Store'),
+   31 (UUID(), 'Powerzone Z9R Battery', 'PZZ9R', 'Batteries', 28, 100, 'Main Store'),
+   32 (UUID(), 'Powerzone 9-B Battery', 'PZ9B', 'Batteries', 28, 100, 'Main Store'),
+   33 (UUID(), 'Exide 2.5L-C Battery', 'EX25LC', 'Batteries', 28, 100, 'Main Store'),
+   34 (UUID(), 'Exide Z4A Battery', 'EXZ4A', 'Batteries', 28, 100, 'Main Store'),
+   35 (UUID(), 'Exide Z5A Battery', 'EXZ5A', 'Batteries', 28, 100, 'Main Store'),
+   36 (UUID(), 'Exide 5L-B Battery', 'EX5LB', 'Batteries', 28, 100, 'Main Store'),
+   37 (UUID(), 'Exide Z7 Battery', 'EXZ7', 'Batteries', 28, 100, 'Main Store'),
+   38 (UUID(), 'Exide 7B-B Battery', 'EX7BB', 'Batteries', 28, 100, 'Main Store'),
+   39 (UUID(), 'Exide Z9 Battery', 'EXZ9', 'Batteries', 28, 100, 'Main Store'),
+   40 (UUID(), 'Exide 9-B Battery', 'EX9B', 'Batteries', 28, 100, 'Main Store'),
+   41 (UUID(), 'Exide X14 Battery', 'EXX14', 'Batteries', 28, 100, 'Main Store'),
+   42 (UUID(), 'Exide 14L-A2 Battery', 'EX14LA2', 'Batteries', 28, 100, 'Main Store'),
+   43 (UUID(), 'Exide 38B20L Car Battery', 'EX38B20L', 'Batteries', 28, 100, 'Main Store'),
+   44 (UUID(), 'Exide 38B20R Car Battery', 'EX38B20R', 'Batteries', 28, 100, 'Main Store'),
+   45 (UUID(), 'Exide DIN44LH Battery', 'EXDIN44LH', 'Batteries', 28, 100, 'Main Store'),
+   46 (UUID(), 'Exide DIN50 Battery', 'EXDIN50', 'Batteries', 28, 100, 'Main Store'),
+   47 (UUID(), 'Exide DIN55R Battery', 'EXDIN55R', 'Batteries', 28, 100, 'Main Store'),
+   48 (UUID(), 'Exide 55D23L Battery', 'EX55D23L', 'Batteries', 28, 100, 'Main Store'),
+   49 (UUID(), 'Exide DIN60 Battery', 'EXDIN60', 'Batteries', 28, 100, 'Main Store'),
+   50 (UUID(), 'Exide DIN66 Battery', 'EXDIN66', 'Batteries', 28, 100, 'Main Store'),
+   51 (UUID(), 'Exide EY70F Battery', 'EXEY70F', 'Batteries', 28, 100, 'Main Store'),
+   52 (UUID(), 'Exide EY70L Battery', 'EXEY70L', 'Batteries', 28, 100, 'Main Store'),
+   53 (UUID(), 'Exide 75D23L Battery', 'EX75D23L', 'Batteries', 28, 100, 'Main Store'),
+   54 (UUID(), 'Exide Drive 80L Battery', 'EXDR80L', 'Batteries', 28, 100, 'Main Store'),
+   55 (UUID(), 'Exide Drive 88L Battery', 'EXDR88L', 'Batteries', 28, 100, 'Main Store'),
+   56 (UUID(), 'Exide Drive 100L Battery', 'EXDR100L', 'Batteries', 28, 100, 'Main Store'),
+   57 (UUID(), 'Exide InvaMaster 150 Inverter Battery', 'EXIM150', 'Batteries', 28, 100, 'Main Store'),
+   58 (UUID(), 'Exide InvaMaster 200 Inverter Battery', 'EXIM200', 'Batteries', 28, 100, 'Main Store'),
+   59 (UUID(), 'Exide Solar Tubular 150 Battery', 'EXST150', 'Batteries', 28, 100, 'Main Store'),
+   60 (UUID(), 'Exide Solar Tubular 200 Battery', 'EXST200', 'Batteries', 28, 100, 'Main Store'),
+   61
+   62 -- WATER PURIFIER SPARES (GST 18%)
+   63 (UUID(), 'Water Purifier Spun Filter', 'WPSF', 'Purifier Spares', 18, 100, 'Main Store'),
+   64 (UUID(), 'Water Purifier Spun Filter Housing', 'WPSFH', 'Purifier Spares', 18, 100, 'Main Store'),
+   65 (UUID(), 'Water Purifier Inline Filter', 'WPIF', 'Purifier Spares', 18, 100, 'Main Store'),
+   66 (UUID(), 'RO Membrane', 'ROM', 'Purifier Spares', 18, 100, 'Main Store'),
+   67 (UUID(), 'RO Membrane Housing', 'ROMH', 'Purifier Spares', 18, 100, 'Main Store'),
+   68 (UUID(), 'Solenoid Valve (SV Valve) for Purifier', 'WPSV', 'Purifier Spares', 18, 100, 'Main Store'),
+   69 (UUID(), 'SMPS Adapter for Water Purifier', 'WPSMPS', 'Purifier Spares', 18, 100, 'Main Store'),
+   70 (UUID(), 'Water Purifier Tap/Faucet', 'WPTAP', 'Purifier Spares', 18, 100, 'Main Store'),
+   71 (UUID(), 'Water Purifier Inlet Valve Set', 'WPIV', 'Purifier Spares', 18, 100, 'Main Store'),
+   72 (UUID(), 'Water Purifier Float Switch', 'WPFLOAT', 'Purifier Spares', 18, 100, 'Main Store'),
+   73 (UUID(), 'Water Purifier Cartridge Filter', 'WPCF', 'Purifier Spares', 18, 100, 'Main Store'),
+   74
+   75 -- STABILIZERS (MICROTEK) (GST 18%)
+   76 (UUID(), 'Microtek Pearl 4090 Voltage Stabilizer', 'MT4090', 'Stabilizers', 18, 100, 'Main Store'),
+   77 (UUID(), 'Microtek Pearl 4150 Voltage Stabilizer', 'MT4150', 'Stabilizers', 18, 100, 'Main Store'),
+   78 (UUID(), 'Microtek Pearl 4130 Voltage Stabilizer', 'MT4130', 'Stabilizers', 18, 100, 'Main Store'),
+   79
+   80 -- WATER HEATERS / GEYSERS (GST 18%)
+   81 (UUID(), 'Media 5.5 Litre Water Heater', 'MED55L', 'Heaters', 18, 100, 'Main Store'),
+   82 (UUID(), 'Media 10 Litre Water Heater', 'MED10L', 'Heaters', 18, 100, 'Main Store'),
+   83 (UUID(), 'Media 15 Litre Water Heater', 'MED15L', 'Heaters', 18, 100, 'Main Store'),
+   84 (UUID(), 'Havells 10 Litre Water Heater', 'HAV10L', 'Heaters', 18, 100, 'Main Store'),
+   85 (UUID(), 'Havells 15 Litre Water Heater', 'HAV15L', 'Heaters', 18, 100, 'Main Store'),
+   86 (UUID(), 'Havells 25 Litre Water Heater', 'HAV25L', 'Heaters', 18, 100, 'Main Store'),
+   87
+   88 -- INVERTERS (GST 18%)
+   89 (UUID(), 'Exide 925 VA / 12V Inverter', 'EXINV925', 'Inverters', 18, 100, 'Main Store'),
+   90 (UUID(), 'Exide 1125 VA / 12V Inverter', 'EXINV1125', 'Inverters', 18, 100, 'Main Store'),
+   91 (UUID(), 'Microtek 825 VA / 12V Inverter', 'MTINV825', 'Inverters', 18, 100, 'Main Store'),
+   92 (UUID(), 'Microtek 1025 VA / 12V Inverter', 'MTINV1025', 'Inverters', 18, 100, 'Main Store'),
+   93 (UUID(), 'Microtek 1100 VA / 12V Inverter', 'MTINV1100', 'Inverters', 18, 100, 'Main Store'),
+   94 (UUID(), 'Microtek 1225 VA / 12V Inverter', 'MTINV1225', 'Inverters', 18, 100, 'Main Store'),
+   95 (UUID(), 'Microtek 1550 VA / 12V Inverter', 'MTINV1550', 'Inverters', 18, 100, 'Main Store'),
+   96 (UUID(), 'Microtek 1825 VA / 12V Inverter', 'MTINV1825', 'Inverters', 18, 100, 'Main Store'),
+   97 (UUID(), 'Microtek 2000 VA / 24V Inverter', 'MTINV2000', 'Inverters', 18, 100, 'Main Store'),
+   98 (UUID(), 'Microtek 2350 VA / 24V Inverter', 'MTINV2350', 'Inverters', 18, 100, 'Main Store');

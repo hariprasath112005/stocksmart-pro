@@ -364,26 +364,30 @@ export default function POS() {
       </div>
 
       {/* 2. ITEM ENTRY GRID */}
-      <Card>
-        <CardHeader className="py-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm">2. Item Entry Grid</CardTitle>
-          <div className="relative w-64">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+      <Card className="min-h-[400px]">
+        <CardHeader className="py-4 flex flex-row items-center justify-between border-b">
+          <CardTitle className="text-lg font-semibold">2. Item Entry Grid</CardTitle>
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input 
-              placeholder="Search product..." 
-              className="pl-7 h-7 text-xs"
+              placeholder="Search product by name or code..." 
+              className="pl-10 h-12 text-base shadow-sm focus-visible:ring-primary"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
             {search && (
-              <div className="absolute top-full left-0 w-full bg-white border rounded shadow-lg z-50 max-h-48 overflow-auto">
-                {products.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).map(p => (
+              <div className="absolute top-full left-0 w-full bg-white border rounded-md shadow-xl z-50 mt-1 max-h-72 overflow-auto border-primary/20">
+                {products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.code.toLowerCase().includes(search.toLowerCase())).map(p => (
                   <div 
                     key={p.id} 
-                    className="p-2 hover:bg-muted cursor-pointer text-xs"
+                    className="p-3 hover:bg-primary/5 cursor-pointer text-sm border-b last:border-0 flex justify-between items-center"
                     onClick={() => { addToCart(p); setSearch(""); }}
                   >
-                    {p.name} ({p.code}) - GST {p.gst_rate}%
+                    <div>
+                      <span className="font-bold text-primary">{p.name}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">({p.code})</span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">GST {p.gst_rate}%</Badge>
                   </div>
                 ))}
               </div>
@@ -391,56 +395,56 @@ export default function POS() {
           </div>
         </CardHeader>
         <CardContent className="p-0 overflow-auto">
-          <table className="w-full text-xs">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="bg-muted border-y">
-                <th className="p-2 text-left w-10">Sl</th>
-                <th className="p-2 text-left">Item Name</th>
-                <th className="p-2 text-left w-24">HSN</th>
-                <th className="p-2 text-right w-20">Qty</th>
-                <th className="p-2 text-left w-16">Unit</th>
-                <th className="p-2 text-right w-24">Rate</th>
-                <th className="p-2 text-right w-20">Disc</th>
-                <th className="p-2 text-right w-28">Taxable</th>
-                <th className="p-2 text-right w-16">GST%</th>
-                <th className="p-2 text-right w-28">GST Amt</th>
-                <th className="p-2 text-right w-32">Total</th>
-                <th className="p-2 w-10"></th>
+              <tr className="bg-muted/50 border-b">
+                <th className="p-3 text-left w-12">Sl</th>
+                <th className="p-3 text-left">Item Description</th>
+                <th className="p-3 text-left w-32">HSN/SAC</th>
+                <th className="p-3 text-right w-24">Qty</th>
+                <th className="p-3 text-left w-20">Unit</th>
+                <th className="p-3 text-right w-32">Rate (₹)</th>
+                <th className="p-3 text-right w-24">Disc (₹)</th>
+                <th className="p-3 text-right w-32">Taxable</th>
+                <th className="p-3 text-center w-24">GST %</th>
+                <th className="p-3 text-right w-32">GST Amt</th>
+                <th className="p-3 text-right w-36">Total</th>
+                <th className="p-3 w-12"></th>
               </tr>
             </thead>
             <tbody>
               {cart.map((item, idx) => (
-                <tr key={item.id} className="border-b hover:bg-muted/50">
-                  <td className="p-2 text-center">{idx + 1}</td>
-                  <td className="p-2 font-medium">{item.name}</td>
-                  <td className="p-2">
-                    <Input value={item.hsnCode} onChange={e => updateItem(item.id, "hsnCode", e.target.value)} className="h-6 text-[10px] p-1" />
+                <tr key={item.id} className="border-b hover:bg-muted/30 transition-colors">
+                  <td className="p-3 text-center text-muted-foreground">{idx + 1}</td>
+                  <td className="p-3 font-semibold text-primary">{item.name}</td>
+                  <td className="p-3">
+                    <Input value={item.hsnCode} onChange={e => updateItem(item.id, "hsnCode", e.target.value)} className="h-8 text-xs font-mono" />
                   </td>
-                  <td className="p-2">
-                    <Input type="number" value={item.qty} onChange={e => updateItem(item.id, "qty", Number(e.target.value))} className="h-6 text-right text-[10px] p-1" />
+                  <td className="p-3">
+                    <Input type="number" value={item.qty} onChange={e => updateItem(item.id, "qty", Number(e.target.value))} className="h-8 text-right font-medium" />
                   </td>
-                  <td className="p-2">
-                    <Input value={item.unit} onChange={e => updateItem(item.id, "unit", e.target.value)} className="h-6 text-[10px] p-1" />
+                  <td className="p-3">
+                    <Input value={item.unit} onChange={e => updateItem(item.id, "unit", e.target.value)} className="h-8 text-xs" />
                   </td>
-                  <td className="p-2">
-                    <Input type="number" value={item.price} onChange={e => updateItem(item.id, "price", Number(e.target.value))} className="h-6 text-right text-[10px] p-1" />
+                  <td className="p-3">
+                    <Input type="number" value={item.price} onChange={e => updateItem(item.id, "price", Number(e.target.value))} className="h-8 text-right font-semibold" />
                   </td>
-                  <td className="p-2">
-                    <Input type="number" value={item.discount} onChange={e => updateItem(item.id, "discount", Number(e.target.value))} className="h-6 text-right text-[10px] p-1" />
+                  <td className="p-3">
+                    <Input type="number" value={item.discount} onChange={e => updateItem(item.id, "discount", Number(e.target.value))} className="h-8 text-right" />
                   </td>
-                  <td className="p-2 text-right">₹{item.taxableValue.toFixed(2)}</td>
-                  <td className="p-2">
+                  <td className="p-3 text-right font-medium">₹{item.taxableValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td className="p-3">
                     <Select value={String(item.gstRate)} onValueChange={v => updateItem(item.id, "gstRate", Number(v))}>
-                      <SelectTrigger className="h-6 text-[10px] p-1"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-8 text-xs font-bold"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {[0, 5, 12, 18, 28].map(r => <SelectItem key={r} value={String(r)}>{r}%</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="p-2 text-right">₹{(item.cgst + item.sgst + item.igst).toFixed(2)}</td>
-                  <td className="p-2 text-right font-bold">₹{item.lineTotal.toFixed(2)}</td>
-                  <td className="p-2">
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeItem(item.id)}><Trash2 className="h-3 w-3" /></Button>
+                  <td className="p-3 text-right text-muted-foreground">₹{(item.cgst + item.sgst + item.igst).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td className="p-3 text-right font-bold text-primary text-base">₹{item.lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td className="p-3">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4" /></Button>
                   </td>
                 </tr>
               ))}
