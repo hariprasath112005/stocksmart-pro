@@ -2,21 +2,27 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Search, Package, AlertTriangle, ArrowRightLeft } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
+import { useSettings } from "@/hooks/useSettings";
 import { AddProductDialog } from "@/components/inventory/AddProductDialog";
 import { UpdateStockDialog } from "@/components/inventory/UpdateStockDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const LOW_STOCK_THRESHOLD = 15;
 
 export default function Inventory() {
   const [search, setSearch] = useState("");
   const { data: products = [], isLoading, error } = useProducts();
+  const { data: settings } = useSettings();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
 
   const filtered = Array.isArray(products) ? products.filter(
     (p) =>
@@ -26,6 +32,42 @@ export default function Inventory() {
   ) : [];
 
   const lowStockCount = filtered.filter((p) => p.stock <= LOW_STOCK_THRESHOLD).length;
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === settings?.inventory_password) {
+      setIsAuthenticated(true);
+    } else {
+      toast.error("Incorrect password");
+    }
+  };
+
+  if (settings?.inventory_password && !isAuthenticated) {
+    return (
+      <div className="h-[80vh] flex items-center justify-center">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle>Inventory Access</CardTitle>
+            <p className="text-sm text-muted-foreground">This page is password protected.</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Enter Password</Label>
+                <Input 
+                  type="password" 
+                  value={passwordInput} 
+                  onChange={(e) => setPasswordInput(e.target.value)} 
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" className="w-full">Unlock Inventory</Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">

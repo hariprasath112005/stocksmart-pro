@@ -150,6 +150,9 @@ async function initializeDatabase() {
     if (tableNames.includes('products')) {
         await ensureColumn('products', 'hsn_code', 'VARCHAR(20)');
     }
+    if (tableNames.includes('company_settings')) {
+        await ensureColumn('company_settings', 'inventory_password', 'VARCHAR(255)');
+    }
     if (tableNames.includes('sales')) {
         await ensureColumn('sales', 'invoice_date', 'DATETIME DEFAULT CURRENT_TIMESTAMP');
         await ensureColumn('sales', 'due_date', 'DATETIME');
@@ -289,13 +292,13 @@ app.get('/api/settings', async (req, res) => {
 
 app.put('/api/settings', async (req, res) => {
   try {
-    const { id, company_name, unit_name, address, gstin, state, state_code, phone, email, bank_name, account_no, ifsc_code } = req.body;
+    const { id, company_name, unit_name, address, gstin, state, state_code, phone, email, bank_name, account_no, ifsc_code, inventory_password } = req.body;
     const sql = `
       UPDATE company_settings 
-      SET company_name = ?, unit_name = ?, address = ?, gstin = ?, state = ?, state_code = ?, phone = ?, email = ?, bank_name = ?, account_no = ?, ifsc_code = ?
+      SET company_name = ?, unit_name = ?, address = ?, gstin = ?, state = ?, state_code = ?, phone = ?, email = ?, bank_name = ?, account_no = ?, ifsc_code = ?, inventory_password = ?
       WHERE id = ?
     `;
-    await query(sql, [company_name, unit_name, address, gstin, state, state_code, phone, email, bank_name, account_no, ifsc_code, id]);
+    await query(sql, [company_name, unit_name, address, gstin, state, state_code, phone, email, bank_name, account_no, ifsc_code, inventory_password, id]);
     const [updated] = await query('SELECT * FROM company_settings WHERE id = ?', [id]);
     res.json(updated);
   } catch (err) {

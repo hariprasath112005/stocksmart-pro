@@ -38,6 +38,7 @@ export interface CompanySettings {
   bank_name?: string;
   account_no?: string;
   ifsc_code?: string;
+  inventory_password?: string;
 }
 
 export interface Sale {

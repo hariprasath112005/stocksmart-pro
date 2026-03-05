@@ -8,6 +8,8 @@ import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateSettings = useUpdateSettings();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
   const [form, setForm] = useState({
     company_name: "",
     unit_name: "",
@@ -20,6 +22,7 @@ export default function SettingsPage() {
     bank_name: "",
     account_no: "",
     ifsc_code: "",
+    inventory_password: "",
   });
 
   useEffect(() => {
@@ -36,6 +39,7 @@ export default function SettingsPage() {
         bank_name: settings.bank_name || "",
         account_no: settings.account_no || "",
         ifsc_code: settings.ifsc_code || "",
+        inventory_password: settings.inventory_password || "",
       });
     }
   }, [settings]);
@@ -46,7 +50,43 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === settings?.inventory_password) {
+      setIsAuthenticated(true);
+    } else {
+      import("sonner").then(({ toast }) => toast.error("Incorrect password"));
+    }
+  };
+
   if (isLoading) return <div className="p-6">Loading settings...</div>;
+
+  if (settings?.inventory_password && !isAuthenticated) {
+    return (
+      <div className="h-[80vh] flex items-center justify-center">
+        <Card className="w-full max-max-w-sm">
+          <CardHeader>
+            <CardTitle>Settings Access</CardTitle>
+            <p className="text-sm text-muted-foreground">Please enter the password to modify settings.</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Enter Password</Label>
+                <Input 
+                  type="password" 
+                  value={passwordInput} 
+                  onChange={(e) => setPasswordInput(e.target.value)} 
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" className="w-full">Unlock Settings</Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-4xl">
@@ -101,6 +141,23 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>IFSC Code</Label>
               <Input value={form.ifsc_code} onChange={e => setForm({ ...form, ifsc_code: e.target.value })} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Security</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Inventory Access Password</Label>
+              <Input 
+                type="password" 
+                value={form.inventory_password} 
+                onChange={e => setForm({ ...form, inventory_password: e.target.value })} 
+                placeholder="Leave blank to disable"
+              />
             </div>
           </CardContent>
         </Card>
