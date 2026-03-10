@@ -122,6 +122,10 @@ export default function SettingsPage() {
                 <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label>Business Address</Label>
+              <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
+            </div>
           </CardContent>
         </Card>
 
