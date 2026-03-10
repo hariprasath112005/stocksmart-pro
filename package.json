@@ -24,6 +24,8 @@
   "build": {
     "appId": "com.theecal.powersystems",
     "productName": "Theecal Powersystems and Marketing",
+    "asar": true,
+    "npmRebuild": false,
     "directories": {
       "output": "release"
     },
@@ -44,7 +46,12 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
-    }
+    },
+    "npmArgs": [
+      "--legacy-peer-deps",
+      "--silent",
+      "--no-warnings"
+    ]
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
