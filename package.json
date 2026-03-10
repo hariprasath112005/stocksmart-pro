@@ -26,12 +26,14 @@
     "productName": "Theecal Powersystems and Marketing",
     "asar": true,
     "npmRebuild": false,
+    "nodeGypRebuild": false,
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
-      "electron/main.cjs"
+      "electron/main.cjs",
+      "!node_modules${/*}"
     ],
     "extraResources": [
       {
@@ -46,12 +48,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
-    },
-    "npmArgs": [
-      "--legacy-peer-deps",
-      "--silent",
-      "--no-warnings"
-    ]
+    }
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
