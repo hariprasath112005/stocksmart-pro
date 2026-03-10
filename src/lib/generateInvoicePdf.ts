@@ -49,7 +49,7 @@ export function generateInvoicePdf(data: InvoiceData) {
     const pageWidth = doc.internal.pageSize.getWidth();
 
     // 1. Header Section
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.text("TAX INVOICE", pageWidth / 2, 15, { align: "center" });
     
@@ -73,24 +73,25 @@ export function generateInvoicePdf(data: InvoiceData) {
     if (data.vehicleNumber) doc.text(`Vehicle No: ${data.vehicleNumber}`, 120, 55);
 
     doc.setDrawColor(200);
-    doc.line(14, 55, pageWidth - 14, 55);
+    doc.line(14, 60, pageWidth - 14, 60);
 
     // 2. Buyer Details Section
+    doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text("BILL TO:", 14, 62);
+    doc.text("BILL TO:", 14, 67);
     doc.setFont("helvetica", "normal");
-    doc.text(data.customerName, 14, 67);
-    doc.text(data.billingAddress || "", 14, 71, { maxWidth: 80 });
-    doc.text(`GSTIN: ${data.customerGstin || "N/A"}`, 14, 82);
-    doc.text(`State: ${data.customerState || "N/A"} (${data.customerStateCode || ""})`, 14, 86);
+    doc.text(data.customerName, 14, 72);
+    doc.text(data.billingAddress || "", 14, 76, { maxWidth: 80 });
+    doc.text(`GSTIN: ${data.customerGstin || "N/A"}`, 14, 87);
+    doc.text(`State: ${data.customerState || "N/A"} (${data.customerStateCode || ""})`, 14, 91);
 
     doc.setFont("helvetica", "bold");
-    doc.text("SHIP TO:", 110, 62);
+    doc.text("SHIP TO:", 110, 67);
     doc.setFont("helvetica", "normal");
-    doc.text(data.customerName, 110, 67);
-    doc.text(data.shippingAddress || data.billingAddress || "", 110, 71, { maxWidth: 80 });
+    doc.text(data.customerName, 110, 72);
+    doc.text(data.shippingAddress || data.billingAddress || "", 110, 76, { maxWidth: 80 });
 
-    doc.line(14, 95, pageWidth - 14, 95);
+    doc.line(14, 100, pageWidth - 14, 100);
 
     // 3. Items Table
     const tableData = data.cart.map((item, i) => [
@@ -108,12 +109,12 @@ export function generateInvoicePdf(data: InvoiceData) {
     ]);
 
     autoTable(doc, {
-      startY: 100,
+      startY: 105,
       head: [["Sl", "Item Description", "HSN/SAC", "Qty", "Unit", "Rate", "Disc", "Taxable", "GST%", "GST Amt", "Total"]],
       body: tableData,
       theme: "grid",
-      headStyles: { fillColor: [41, 65, 148], fontSize: 7, halign: "center" },
-      bodyStyles: { fontSize: 7 },
+      headStyles: { fillColor: [41, 65, 148], fontSize: 7.5, halign: "center" },
+      bodyStyles: { fontSize: 7.5 },
       columnStyles: {
         0: { halign: "center", cellWidth: 8 },
         1: { cellWidth: 40 },
@@ -134,7 +135,7 @@ export function generateInvoicePdf(data: InvoiceData) {
     
     // Tax Summary Table (Simplified)
     if (finalY < doc.internal.pageSize.height - 80) {
-      doc.setFontSize(8);
+      doc.setFontSize(9.5);
       doc.setFont("helvetica", "bold");
       doc.text("Tax Summary", 14, finalY + 10);
       
@@ -147,8 +148,8 @@ export function generateInvoicePdf(data: InvoiceData) {
         startY: finalY + 12,
         body: taxData,
         theme: "plain",
-        styles: { fontSize: 8 },
-        columnStyles: { 0: { cellWidth: 30 }, 1: { halign: "right", cellWidth: 30 } },
+        styles: { fontSize: 9.5 },
+        columnStyles: { 0: { cellWidth: 35 }, 1: { halign: "right", cellWidth: 35 } },
         margin: { left: 14 }
       });
     }
@@ -189,19 +190,19 @@ export function generateInvoicePdf(data: InvoiceData) {
     }
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(10.5);
     doc.text("Bank Details:", 14, y);
     doc.setFont("helvetica", "normal");
-    doc.text(`Bank: ${data.seller.bank_name || "N/A"}`, 14, y + 5);
-    doc.text(`A/c No: ${data.seller.account_no || "N/A"}`, 14, y + 10);
-    doc.text(`IFSC: ${data.seller.ifsc_code || "N/A"}`, 14, y + 15);
+    doc.text(`Bank: ${data.seller.bank_name || "N/A"}`, 14, y + 6);
+    doc.text(`A/c No: ${data.seller.account_no || "N/A"}`, 14, y + 11);
+    doc.text(`IFSC: ${data.seller.ifsc_code || "N/A"}`, 14, y + 16);
 
     doc.setFont("helvetica", "bold");
     doc.text("Declaration:", 100, y);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.text("We declare that this invoice shows the actual price of the goods", 100, y + 5);
-    doc.text("described and that all particulars are true and correct.", 100, y + 8);
+    doc.setFontSize(8.5);
+    doc.text("We declare that this invoice shows the actual price of the goods", 100, y + 6);
+    doc.text("described and that all particulars are true and correct.", 100, y + 10);
 
     y += 30;
     doc.line(140, y, pageWidth - 14, y);

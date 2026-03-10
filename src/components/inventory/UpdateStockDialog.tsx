@@ -55,8 +55,9 @@ export function UpdateStockDialog({ product }: UpdateStockDialogProps) {
             <Label>Amount</Label>
             <Input
               type="number"
-              value={amount}
+              value={amount === "0" ? "" : amount}
               onChange={(e) => setAmount(e.target.value)}
+              onFocus={(e) => amount === "0" && setAmount("")}
               className="h-9"
             />
           </div>

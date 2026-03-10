@@ -414,37 +414,55 @@ export default function POS() {
             </thead>
             <tbody>
               {cart.map((item, idx) => (
-                <tr key={item.id} className="border-b hover:bg-muted/30 transition-colors">
-                  <td className="p-3 text-center text-muted-foreground">{idx + 1}</td>
-                  <td className="p-3 font-semibold text-primary">{item.name}</td>
+                <tr key={item.id} className="border-b hover:bg-muted/30 transition-colors h-16">
+                  <td className="p-3 text-center text-muted-foreground font-medium">{idx + 1}</td>
+                  <td className="p-3 font-bold text-primary text-base">{item.name}</td>
                   <td className="p-3">
-                    <Input value={item.hsnCode} onChange={e => updateItem(item.id, "hsnCode", e.target.value)} className="h-8 text-xs font-mono" />
+                    <Input value={item.hsnCode} onChange={e => updateItem(item.id, "hsnCode", e.target.value)} className="h-10 text-sm font-bold bg-white" />
                   </td>
                   <td className="p-3">
-                    <Input type="number" value={item.qty} onChange={e => updateItem(item.id, "qty", Number(e.target.value))} className="h-8 text-right font-medium" />
+                    <Input 
+                      type="number" 
+                      value={item.qty || ""} 
+                      onChange={e => updateItem(item.id, "qty", Number(e.target.value))} 
+                      onFocus={e => e.target.value === "0" && (e.target.value = "")}
+                      className="h-10 text-right text-sm font-black bg-white" 
+                    />
                   </td>
                   <td className="p-3">
-                    <Input value={item.unit} onChange={e => updateItem(item.id, "unit", e.target.value)} className="h-8 text-xs" />
+                    <Input value={item.unit} onChange={e => updateItem(item.id, "unit", e.target.value)} className="h-10 text-sm font-bold bg-white" />
                   </td>
                   <td className="p-3">
-                    <Input type="number" value={item.price} onChange={e => updateItem(item.id, "price", Number(e.target.value))} className="h-8 text-right font-semibold" />
+                    <Input 
+                      type="number" 
+                      value={item.price || ""} 
+                      onChange={e => updateItem(item.id, "price", Number(e.target.value))} 
+                      onFocus={e => e.target.value === "0" && (e.target.value = "")}
+                      className="h-10 text-right text-sm font-black bg-white" 
+                    />
                   </td>
                   <td className="p-3">
-                    <Input type="number" value={item.discount} onChange={e => updateItem(item.id, "discount", Number(e.target.value))} className="h-8 text-right" />
+                    <Input 
+                      type="number" 
+                      value={item.discount || ""} 
+                      onChange={e => updateItem(item.id, "discount", Number(e.target.value))} 
+                      onFocus={e => e.target.value === "0" && (e.target.value = "")}
+                      className="h-10 text-right text-sm font-bold bg-white" 
+                    />
                   </td>
-                  <td className="p-3 text-right font-medium">₹{item.taxableValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td className="p-3 text-right font-bold text-base">₹{item.taxableValue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                   <td className="p-3">
                     <Select value={String(item.gstRate)} onValueChange={v => updateItem(item.id, "gstRate", Number(v))}>
-                      <SelectTrigger className="h-8 text-xs font-bold"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-10 text-sm font-black bg-white"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {[0, 5, 12, 18, 28].map(r => <SelectItem key={r} value={String(r)}>{r}%</SelectItem>)}
+                        {[0, 5, 12, 18, 28].map(r => <SelectItem key={r} value={String(r)} className="font-bold">{r}%</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="p-3 text-right text-muted-foreground">₹{(item.cgst + item.sgst + item.igst).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                  <td className="p-3 text-right font-bold text-primary text-base">₹{item.lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td className="p-3 text-right font-semibold">₹{(item.cgst + item.sgst + item.igst).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td className="p-3 text-right font-black text-primary text-lg">₹{item.lineTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                   <td className="p-3">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 text-destructive hover:bg-destructive/10" onClick={() => removeItem(item.id)}><Trash2 className="h-5 w-5" /></Button>
                   </td>
                 </tr>
               ))}
