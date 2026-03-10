@@ -162,7 +162,7 @@ export default function POS() {
     return null;
   };
 
-  const handleSave = async () => {
+  const handleSave = async (action: "save" | "print" = "save") => {
     const error = validate();
     if (error) {
       toast.error(error);
@@ -235,8 +235,22 @@ export default function POS() {
           roundOff: totals.roundOff,
           grandTotal: totals.grandTotal,
           grandTotalWords: totals.grandTotalWords,
-        });
+        }, action);
       }
+
+      // Reset form
+      setCart([]);
+      setSelectedCustomer(null);
+      setReferenceNumber("");
+      setTransportName("");
+      setVehicleNumber("");
+      setLrNumber("");
+      setCustomerName("Walk-in");
+      setCustomerGstin("");
+      setCustomerState(settings?.state || "Tamil Nadu");
+      setCustomerStateCode(settings?.state_code || "33");
+      setBillingAddress("");
+      setShippingAddress("");
     } catch (err) {
       // Error handled by mutation
     }
@@ -248,8 +262,11 @@ export default function POS() {
         <h1 className="text-2xl font-bold">GST Tax Invoice</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => {}}>Drafts</Button>
-          <Button onClick={handleSave} disabled={completeSale.isPending}>
-            {completeSale.isPending ? "Saving..." : "Save Invoice"}
+          <Button variant="secondary" onClick={() => handleSave("print")} disabled={completeSale.isPending}>
+            <Printer className="mr-2 h-4 w-4" /> {completeSale.isPending ? "Printing..." : "Print Invoice"}
+          </Button>
+          <Button onClick={() => handleSave("save")} disabled={completeSale.isPending}>
+            <Download className="mr-2 h-4 w-4" /> {completeSale.isPending ? "Saving..." : "Save Invoice"}
           </Button>
         </div>
       </div>

@@ -43,7 +43,7 @@ interface InvoiceData {
   grandTotalWords: string;
 }
 
-export function generateInvoicePdf(data: InvoiceData) {
+export function generateInvoicePdf(data: InvoiceData, action: "save" | "print" = "save") {
   try {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -94,18 +94,22 @@ export function generateInvoicePdf(data: InvoiceData) {
     doc.line(14, 100, pageWidth - 14, 100);
 
     // 3. Items Table
+    const formatCurrency = (num: number) => {
+      return num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
     const tableData = data.cart.map((item, i) => [
       i + 1,
       item.name,
       item.hsnCode || "",
       item.qty,
       item.unit || "PCS",
-      item.price.toFixed(2),
-      item.discount.toFixed(2),
-      item.taxableValue.toFixed(2),
+      formatCurrency(item.price),
+      formatCurrency(item.discount),
+      formatCurrency(item.taxableValue),
       `${item.gstRate}%`,
-      (item.cgst + item.sgst + item.igst).toFixed(2),
-      item.lineTotal.toFixed(2)
+      formatCurrency(item.cgst + item.sgst + item.igst),
+      formatCurrency(item.lineTotal)
     ]);
 
     autoTable(doc, {
@@ -113,8 +117,8 @@ export function generateInvoicePdf(data: InvoiceData) {
       head: [["Sl", "Item Description", "HSN/SAC", "Qty", "Unit", "Rate", "Disc", "Taxable", "GST%", "GST Amt", "Total"]],
       body: tableData,
       theme: "grid",
-      headStyles: { fillColor: [41, 65, 148], fontSize: 7.5, halign: "center" },
-      bodyStyles: { fontSize: 7.5 },
+      headStyles: { fillColor: [41, 65, 148], fontSize: 7.5, halign: "center", fontStyle: "bold" },
+      bodyStyles: { fontSize: 7.5, font: "helvetica" },
       columnStyles: {
         0: { halign: "center", cellWidth: 8 },
         1: { cellWidth: 40 },
@@ -140,15 +144,15 @@ export function generateInvoicePdf(data: InvoiceData) {
       doc.text("Tax Summary", 14, finalY + 10);
       
       const taxData = [];
-      if (data.cgst > 0) taxData.push(["CGST Total", `₹${data.cgst.toFixed(2)}`]);
-      if (data.sgst > 0) taxData.push(["SGST Total", `₹${data.sgst.toFixed(2)}`]);
-      if (data.igst > 0) taxData.push(["IGST Total", `₹${data.igst.toFixed(2)}`]);
+      if (data.cgst > 0) taxData.push(["CGST Total", `Rs. ${formatCurrency(data.cgst)}`]);
+      if (data.sgst > 0) taxData.push(["SGST Total", `Rs. ${formatCurrency(data.sgst)}`]);
+      if (data.igst > 0) taxData.push(["IGST Total", `Rs. ${formatCurrency(data.igst)}`]);
       
       autoTable(doc, {
         startY: finalY + 12,
         body: taxData,
         theme: "plain",
-        styles: { fontSize: 9.5 },
+        styles: { fontSize: 9.5, font: "helvetica" },
         columnStyles: { 0: { cellWidth: 35 }, 1: { halign: "right", cellWidth: 35 } },
         margin: { left: 14 }
       });
@@ -161,21 +165,21 @@ export function generateInvoicePdf(data: InvoiceData) {
 
     doc.setFont("helvetica", "normal");
     doc.text("Taxable Amount:", rightX, y);
-    doc.text(`₹${data.taxableTotal.toFixed(2)}`, pageWidth - 15, y, { align: "right" });
+    doc.text(`Rs. ${formatCurrency(data.taxableTotal)}`, pageWidth - 15, y, { align: "right" });
     y += 5;
     
     doc.text("Total GST:", rightX, y);
-    doc.text(`₹${data.totalGst.toFixed(2)}`, pageWidth - 15, y, { align: "right" });
+    doc.text(`Rs. ${formatCurrency(data.totalGst)}`, pageWidth - 15, y, { align: "right" });
     y += 5;
     
     doc.text("Round Off:", rightX, y);
-    doc.text(`₹${data.roundOff.toFixed(2)}`, pageWidth - 15, y, { align: "right" });
+    doc.text(`Rs. ${formatCurrency(data.roundOff)}`, pageWidth - 15, y, { align: "right" });
     y += 7;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.text("Grand Total:", rightX, y);
-    doc.text(`₹${data.grandTotal.toFixed(2)}`, pageWidth - 15, y, { align: "right" });
+    doc.text(`Rs. ${formatCurrency(data.grandTotal)}`, pageWidth - 15, y, { align: "right" });
     y += 7;
 
     doc.setFontSize(8);
@@ -209,8 +213,14 @@ export function generateInvoicePdf(data: InvoiceData) {
     doc.setFontSize(8);
     doc.text("Authorised Signatory", pageWidth - 40, y + 5, { align: "center" });
 
-    doc.save(`${data.invoiceNumber}.pdf`);
-    toast.success("GST Invoice generated successfully!");
+    if (action === "print") {
+      doc.autoPrint();
+      window.open(doc.output('bloburl'), '_blank');
+      toast.success("Opening print dialog...");
+    } else {
+      doc.save(`${data.invoiceNumber}.pdf`);
+      toast.success("GST Invoice generated successfully!");
+    }
   } catch (error) {
     console.error("Failed to generate PDF:", error);
     toast.error("Failed to generate PDF. Please try again.");
